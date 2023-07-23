@@ -1,21 +1,29 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { ScrollView } from "react-native";
 import Select from "./Select";
 
 interface ISelectSample {}
 
 function SelectSample({}: ISelectSample) {
   return (
-    <View style={{ flex: 1 }}>
-      <Select zIndex={8}></Select>
-      <Select zIndex={7}></Select>
-      <Select zIndex={6}></Select>
-      <Select zIndex={5}></Select>
-      <Select zIndex={4}></Select>
-      <Select zIndex={3}></Select>
-      <Select zIndex={2}></Select>
-      <Select zIndex={1}></Select>
-    </View>
+    <ScrollView style={{ flex: 1 }}>
+      <Select name="select_1" zIndex={8}></Select>
+      <Select name="select_2" zIndex={8}></Select>
+      <Select name="select_3" zIndex={8}></Select>
+      <Select name="select_4" zIndex={8}></Select>
+      <Select name="select_5" zIndex={8}></Select>
+      <Select name="select_6" zIndex={8}></Select>
+      <Select name="select_7" zIndex={8}></Select>
+      <Select name="select_8" zIndex={8}></Select>
+      <Select name="select_8" zIndex={8}></Select>
+      <Select name="select_9" zIndex={8}></Select>
+      <Select name="select_10" zIndex={8}></Select>
+      <Select name="select_11" zIndex={8}></Select>
+      <Select name="select_12" zIndex={8}></Select>
+      <Select name="select_13" zIndex={8}></Select>
+      <Select name="select_14" zIndex={8}></Select>
+      <Select name="select_15" zIndex={8}></Select>
+    </ScrollView>
   );
 }
 

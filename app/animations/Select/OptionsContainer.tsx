@@ -16,6 +16,7 @@ interface IOptionsContainer {
   backgroundColor: string;
   optionsContainerStyle: any;
   optionsPlaceholder?: string;
+  pageY: number;
 }
 
 function OptionsContainer({
@@ -25,21 +26,23 @@ function OptionsContainer({
   tooltipPosition,
   backgroundColor,
   optionsContainerStyle,
+  pageY,
 }: IOptionsContainer) {
   const animation = useDerivedValue(() => {
-    return open ? withTiming(1) : withTiming(0);
+    return open
+      ? withTiming(1, { duration: 150 })
+      : withTiming(0, { duration: 150 });
   });
 
-  console.log("tooltipPosition", tooltipPosition);
   const rStyle = useAnimatedStyle(() => {
     const height = interpolate(animation.value, [0, 1], [0, optionsHeight]);
     const interpolatePositionValue =
-      tooltipPosition === "bottom" ? 45 : -optionsHeight;
+      (tooltipPosition === "bottom" ? 45 : -optionsHeight) + pageY;
 
     const top = interpolate(
       animation.value,
       [0, 1],
-      [40, interpolatePositionValue]
+      [pageY + 20, interpolatePositionValue]
     );
 
     return {
@@ -79,6 +82,7 @@ function OptionsContainer({
 const styles = StyleSheet.create({
   optionsContainer: {
     height: 0,
+    zIndex: 2,
     position: "absolute",
     width: "100%",
   },

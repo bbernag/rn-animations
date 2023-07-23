@@ -16,6 +16,7 @@ import Animated, {
 import Option from "./Option";
 import OptionsContainer from "./OptionsContainer";
 import OptionsContainerPlaceholder from "./OptionsContainerPlaceholder";
+import { useSelectContext } from "./SelectContext";
 
 interface ISelect {
   color: string;
@@ -30,6 +31,7 @@ interface ISelect {
   selectedOptionStyle?: any;
   toggleOptions: () => void;
   optionsPlaceholder?: string;
+  name: string;
 }
 
 const OPTIONS = [
@@ -47,7 +49,7 @@ export type TOption = {
   value: string;
 };
 
-// const SAFE_AREA_VIEW_HEIGHT = 120;
+const SAFE_AREA_VIEW_HEIGHT = 90;
 
 function Select({
   optionsHeight = 200,
@@ -61,7 +63,10 @@ function Select({
   optionStyle,
   selectedOptionStyle,
   optionsPlaceholder,
+  name,
 }: ISelect) {
+  const { addSelect, removeSelect, currentSelect, setCurrentSelect } =
+    useSelectContext();
   const [options, setOptions] = useState<TOption[]>(_options);
   const [selected, setSelected] = useState<TOption>(
     _selectedValue || defaultValue
@@ -71,12 +76,20 @@ function Select({
     "bottom"
   );
 
+  const [pageY, setPageY] = useState(0);
+
   React.useEffect(() => {
     setOptions(options);
   }, [options]);
 
   const handleOpen = () => {
-    setOpen((_open) => !_open);
+    setOpen((_open) => {
+      if (!_open) {
+        setCurrentSelect(name);
+      }
+
+      return !_open;
+    });
   };
 
   const handleSelectedOption = (option: TOption) => {
@@ -89,18 +102,9 @@ function Select({
 
   const handleSelectLayout = (event: LayoutChangeEvent) => {
     event.target?.measure((x, y, width, height, pageX, pageY) => {
-      // console.log("x", x);
-      // console.log("y", y);
-      // console.log("width", width);
-      // console.log("height", height);
-      // console.log("pageX", pageX);
-      // console.log("pageY", pageY);
-      // const layout = event.nativeEvent.layout;
-      const totalHeight = pageY + optionsHeight;
-      // layout.height + layout.y + optionsHeight + SAFE_AREA_VIEW_HEIGHT;
+      const totalHeight = pageY + optionsHeight + SAFE_AREA_VIEW_HEIGHT;
+      setPageY(pageY);
       const screenHeight = Dimensions.get("screen").height;
-      // console.log("layout", layout);
-      // console.log("screenHeight", screenHeight);
       const position = totalHeight > screenHeight ? "top" : "bottom";
       setTooltipPosition(position);
     });
@@ -136,73 +140,86 @@ function Select({
     };
   });
 
+  React.useEffect(() => {
+    addSelect(name);
+
+    return () => {
+      removeSelect(name);
+    };
+  }, [name]);
+
+  React.useEffect(() => {
+    if (currentSelect !== name) {
+      setOpen(false);
+    }
+  }, [currentSelect]);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.select_container}>
-        <Animated.View
-          style={[
-            {
-              backgroundColor,
-              borderRadius: 5,
-            },
-            styles.select,
-            rContainerStyle,
-          ]}
-          onLayout={handleSelectLayout}
+    <>
+      <Animated.View
+        style={[
+          {
+            backgroundColor,
+            borderRadius: 5,
+          },
+          styles.select,
+          rContainerStyle,
+        ]}
+        onLayout={handleSelectLayout}
+      >
+        <TouchableHighlight
+          activeOpacity={0.2}
+          underlayColor={backgroundColor}
+          onPress={handleOpen}
+          style={[styles.option_touchable, { backgroundColor }]}
         >
-          <TouchableHighlight
-            activeOpacity={0.2}
-            underlayColor={backgroundColor}
-            onPress={handleOpen}
-            style={[styles.option_touchable, { backgroundColor }]}
-          >
-            <View style={styles.select_selected_option_container}>
-              <Animated.Text
-                style={[
-                  styles.select_option__selected,
-                  { color },
-                  selectedOptionStyle,
-                ]}
-              >
-                {currentValue?.name || "Select an option"}
-              </Animated.Text>
-            </View>
-          </TouchableHighlight>
-          <OptionsContainer
-            tooltipPosition={tooltipPosition}
-            optionsPlaceholder={optionsPlaceholder}
-            open={open}
-            optionsContainerStyle={optionsContainerStyle}
-            optionsHeight={optionsHeight}
-            backgroundColor={backgroundColor}
-            color={color}
-          >
-            {open ? (
-              options.length ? (
-                options.map((option) => {
-                  return (
-                    <Option
-                      color={color}
-                      option={option}
-                      key={option.value}
-                      optionStyle={optionStyle}
-                      handleSelectedOption={handleSelectedOption}
-                      isActive={option.value === currentValue?.value}
-                    />
-                  );
-                })
-              ) : (
-                <OptionsContainerPlaceholder
-                  optionsPlaceholder={optionsPlaceholder}
+          <View style={styles.select_selected_option_container}>
+            <Animated.Text
+              style={[
+                styles.select_option__selected,
+                { color },
+                selectedOptionStyle,
+              ]}
+            >
+              {currentValue?.name || "Select an option"}
+            </Animated.Text>
+          </View>
+        </TouchableHighlight>
+      </Animated.View>
+      <OptionsContainer
+        tooltipPosition={tooltipPosition}
+        optionsPlaceholder={optionsPlaceholder}
+        open={open}
+        optionsContainerStyle={optionsContainerStyle}
+        optionsHeight={optionsHeight}
+        backgroundColor={backgroundColor}
+        color={color}
+        pageY={pageY}
+      >
+        {open ? (
+          options.length ? (
+            options.map((option) => {
+              return (
+                <Option
                   color={color}
-                  optionsHeight={optionsHeight}
+                  option={option}
+                  key={option.value}
+                  optionStyle={optionStyle}
+                  handleSelectedOption={handleSelectedOption}
+                  isActive={option.value === currentValue?.value}
                 />
-              )
-            ) : null}
-          </OptionsContainer>
-        </Animated.View>
-      </View>
-    </View>
+              );
+            })
+          ) : (
+            <OptionsContainerPlaceholder
+              optionsPlaceholder={optionsPlaceholder}
+              color={color}
+              optionsHeight={optionsHeight}
+            />
+          )
+        ) : null}
+      </OptionsContainer>
+    </>
   );
 }
 
@@ -211,14 +228,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     backgroundColor: "#ffffff99",
-    // justifyContent: "flex-end",
   },
   select_container: {
     width: "50%",
   },
   select: {
     position: "relative",
-    margin: 8,
+    marginVertical: 16,
     justifyContent: "center",
     height: 45,
     width: "100%",
