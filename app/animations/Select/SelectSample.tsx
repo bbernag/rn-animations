@@ -11,7 +11,12 @@ function SelectSample({}: ISelectSample) {
       <Select name="select_2" zIndex={8}></Select>
       <Select name="select_3" zIndex={8}></Select>
       <Select name="select_4" zIndex={8}></Select>
-      <Select name="select_5" zIndex={8}></Select>
+      <Select
+        name="select_5"
+        optionsHeight={500}
+        defaultValue={{ name: "Hola", value: "" }}
+        zIndex={8}
+      ></Select>
       <Select name="select_6" zIndex={8}></Select>
       <Select name="select_7" zIndex={8}></Select>
       <Select name="select_8" zIndex={8}></Select>

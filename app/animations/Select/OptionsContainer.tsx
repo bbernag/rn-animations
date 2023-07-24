@@ -36,25 +36,30 @@ function OptionsContainer({
 
   const rStyle = useAnimatedStyle(() => {
     const height = interpolate(animation.value, [0, 1], [0, optionsHeight]);
-    const interpolatePositionValue =
-      (tooltipPosition === "bottom" ? 45 : -optionsHeight) + pageY;
 
-    const top = interpolate(
-      animation.value,
-      [0, 1],
-      [pageY + 20, interpolatePositionValue]
-    );
+    const bottomTranslateRanges = [pageY - 35, pageY - 16];
+    // const topTranslateRanges = [pageY, pageY - optionsHeight + 16];
+    const topTranslateRanges = [pageY - 30, pageY - optionsHeight - 61];
+
+    // console.log("tooltipPosition", tooltipPosition.value);
+
+    const translationRanges =
+      tooltipPosition.value === "bottom"
+        ? bottomTranslateRanges
+        : topTranslateRanges;
+
+    const translateY = interpolate(animation.value, [0, 1], translationRanges);
 
     return {
-      top,
       height,
       display: "flex",
       opacity: animation.value,
+      transform: [{ translateY }],
     };
   });
 
   const borderStyles =
-    tooltipPosition === "bottom"
+    tooltipPosition.value === "bottom"
       ? {
           borderBottomLeftRadius: 5,
           borderBottomRightRadius: 5,

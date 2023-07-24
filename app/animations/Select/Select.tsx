@@ -9,14 +9,23 @@ import {
 import Animated, {
   interpolate,
   interpolateColor,
+  measure,
+  runOnJS,
+  useAnimatedGestureHandler,
+  useAnimatedRef,
   useAnimatedStyle,
   useDerivedValue,
+  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import Option from "./Option";
 import OptionsContainer from "./OptionsContainer";
 import OptionsContainerPlaceholder from "./OptionsContainerPlaceholder";
 import { useSelectContext } from "./SelectContext";
+import {
+  TapGestureHandler,
+  TapGestureHandlerGestureEvent,
+} from "react-native-gesture-handler";
 
 interface ISelect {
   color: string;
@@ -50,6 +59,8 @@ export type TOption = {
 };
 
 const SAFE_AREA_VIEW_HEIGHT = 90;
+const SCREEN_HEIGHT =
+  Dimensions.get("window").height - SAFE_AREA_VIEW_HEIGHT - 200;
 
 function Select({
   optionsHeight = 200,
@@ -72,11 +83,9 @@ function Select({
     _selectedValue || defaultValue
   );
   const [open, setOpen] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">(
-    "bottom"
-  );
-
-  const [pageY, setPageY] = useState(0);
+  // const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">(
+  //   "bottom"
+  // );
 
   React.useEffect(() => {
     setOptions(options);
@@ -100,44 +109,8 @@ function Select({
 
   const currentValue = _selectedValue || selected;
 
-  const handleSelectLayout = (event: LayoutChangeEvent) => {
-    event.target?.measure((x, y, width, height, pageX, pageY) => {
-      const totalHeight = pageY + optionsHeight + SAFE_AREA_VIEW_HEIGHT;
-      setPageY(pageY);
-      const screenHeight = Dimensions.get("screen").height;
-      const position = totalHeight > screenHeight ? "top" : "bottom";
-      setTooltipPosition(position);
-    });
-  };
-
   const containerStyleAnimation = useDerivedValue(() => {
     return open ? withTiming(1) : withTiming(0);
-  });
-
-  const rContainerStyle = useAnimatedStyle(() => {
-    const radius = interpolate(containerStyleAnimation.value, [1, 0], [0, 5]);
-    const borderColor = interpolateColor(
-      containerStyleAnimation.value,
-      [0, 1],
-      ["transparent", "#00000005"]
-    );
-
-    const containerStylePosition =
-      tooltipPosition === "bottom"
-        ? {
-            borderBottomLeftRadius: radius,
-            borderBottomRightRadius: radius,
-          }
-        : {
-            borderTopLeftRadius: radius,
-            borderTopRightRadius: radius,
-          };
-
-    return {
-      ...containerStylePosition,
-      borderBottomColor: borderColor,
-      borderBottomWidth: 1,
-    };
   });
 
   React.useEffect(() => {
@@ -154,38 +127,83 @@ function Select({
     }
   }, [currentSelect]);
 
+  const aRef = useAnimatedRef<View>();
+  const pageY = useSharedValue(0);
+  const tooltipPosition = useSharedValue("bottom" as "bottom" | "top");
+
+  const rContainerStyle = useAnimatedStyle(() => {
+    const radius = interpolate(containerStyleAnimation.value, [1, 0], [0, 5]);
+    const borderColor = interpolateColor(
+      containerStyleAnimation.value,
+      [0, 1],
+      ["transparent", "#00000005"]
+    );
+
+    const containerStylePosition =
+      tooltipPosition.value === "bottom"
+        ? {
+            borderBottomLeftRadius: radius,
+            borderBottomRightRadius: radius,
+          }
+        : {
+            borderTopLeftRadius: radius,
+            borderTopRightRadius: radius,
+          };
+
+    return {
+      ...containerStylePosition,
+      borderBottomColor: borderColor,
+      borderBottomWidth: 1,
+    };
+  });
+
+  const tapGestureEvent =
+    useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
+      onEnd(event, context, isCanceledOrFailed) {
+        const layout = measure(aRef);
+        pageY.value = layout?.y + layout.height || 0;
+        tooltipPosition.value =
+          layout?.pageY > SCREEN_HEIGHT ? "top" : "bottom";
+        runOnJS(handleOpen)();
+      },
+    });
+
   return (
     <>
-      <Animated.View
-        style={[
-          {
-            backgroundColor,
-            borderRadius: 5,
-          },
-          styles.select,
-          rContainerStyle,
-        ]}
-        onLayout={handleSelectLayout}
-      >
-        <TouchableHighlight
-          activeOpacity={0.2}
-          underlayColor={backgroundColor}
-          onPress={handleOpen}
-          style={[styles.option_touchable, { backgroundColor }]}
-        >
-          <View style={styles.select_selected_option_container}>
-            <Animated.Text
-              style={[
-                styles.select_option__selected,
-                { color },
-                selectedOptionStyle,
-              ]}
+      <View ref={aRef}>
+        <TapGestureHandler onGestureEvent={tapGestureEvent}>
+          <Animated.View
+            style={[
+              {
+                backgroundColor,
+                borderRadius: 5,
+              },
+              styles.select,
+              rContainerStyle,
+            ]}
+            // onLayout={handleSelectLayout}
+          >
+            <TouchableHighlight
+              activeOpacity={0.2}
+              underlayColor={backgroundColor}
+              // onPress={handleOpen}
+              style={[styles.option_touchable, { backgroundColor }]}
             >
-              {currentValue?.name || "Select an option"}
-            </Animated.Text>
-          </View>
-        </TouchableHighlight>
-      </Animated.View>
+              <View style={styles.select_selected_option_container}>
+                <Animated.Text
+                  style={[
+                    styles.select_option__selected,
+                    { color },
+                    selectedOptionStyle,
+                  ]}
+                >
+                  {currentValue?.name || "Select an option"}
+                </Animated.Text>
+              </View>
+            </TouchableHighlight>
+          </Animated.View>
+        </TapGestureHandler>
+      </View>
       <OptionsContainer
         tooltipPosition={tooltipPosition}
         optionsPlaceholder={optionsPlaceholder}
@@ -194,7 +212,7 @@ function Select({
         optionsHeight={optionsHeight}
         backgroundColor={backgroundColor}
         color={color}
-        pageY={pageY}
+        pageY={pageY.value}
       >
         {open ? (
           options.length ? (
@@ -237,6 +255,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     justifyContent: "center",
     height: 45,
+    flex: 1,
     width: "100%",
   },
   select_selected_option_container: {

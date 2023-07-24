@@ -32,6 +32,9 @@ export default function TabOneScreen() {
       <Link href="/animations/Select/Select" asChild>
         <Text style={{ marginTop: 16 }}>Select</Text>
       </Link>
+      <Link href="/animations/EnteringExiting" asChild>
+        <Text style={{ marginTop: 16 }}>EnteringExiting</Text>
+      </Link>
 
       <View
         style={styles.separator}
