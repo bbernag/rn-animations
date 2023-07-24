@@ -1,9 +1,10 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
   useDerivedValue,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
 
@@ -12,7 +13,7 @@ interface IOptionsContainer {
   color: string;
   open: boolean;
   optionsHeight: number;
-  tooltipPosition: "top" | "bottom";
+  tooltipPosition: Animated.SharedValue<"top" | "bottom">;
   backgroundColor: string;
   optionsContainerStyle: any;
   optionsPlaceholder?: string;
@@ -30,18 +31,18 @@ function OptionsContainer({
 }: IOptionsContainer) {
   const animation = useDerivedValue(() => {
     return open
-      ? withTiming(1, { duration: 150 })
-      : withTiming(0, { duration: 150 });
+      ? withTiming(1, { duration: 200 })
+      : withTiming(0, { duration: 200 });
+    // ? withSpring(1, { damping: 12 })
+    // : withSpring(0, { damping: 12 });
   });
 
   const rStyle = useAnimatedStyle(() => {
     const height = interpolate(animation.value, [0, 1], [0, optionsHeight]);
+    // const height = animation.value ? optionsHeight : 0;
 
     const bottomTranslateRanges = [pageY - 35, pageY - 16];
-    // const topTranslateRanges = [pageY, pageY - optionsHeight + 16];
     const topTranslateRanges = [pageY - 30, pageY - optionsHeight - 61];
-
-    // console.log("tooltipPosition", tooltipPosition.value);
 
     const translationRanges =
       tooltipPosition.value === "bottom"

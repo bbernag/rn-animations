@@ -1,4 +1,5 @@
 import React, { SetStateAction } from "react";
+import { Pressable, View } from "react-native";
 
 type TSelectContext = {
   selects: any[];
@@ -45,7 +46,17 @@ function SelectProvider({ children }: TSelectProvider) {
         setCurrentSelect,
       }}
     >
-      {children}
+      <Pressable
+        style={{ flex: 1 }}
+        onPress={() => {
+          if (currentSelect) {
+            setCurrentSelect("");
+          }
+        }}
+        // onPress={() => {}}
+      >
+        {children}
+      </Pressable>
     </SelectContext.Provider>
   );
 }

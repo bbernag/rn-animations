@@ -3,6 +3,7 @@ import {
   Dimensions,
   LayoutChangeEvent,
   StyleSheet,
+  Text,
   TouchableHighlight,
   View,
 } from "react-native";
@@ -26,6 +27,7 @@ import {
   TapGestureHandler,
   TapGestureHandlerGestureEvent,
 } from "react-native-gesture-handler";
+import { FullWindowOverlay } from "react-native-screens";
 
 interface ISelect {
   color: string;
@@ -157,20 +159,29 @@ function Select({
     };
   });
 
+  const rChevronStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(containerStyleAnimation.value, [0, 1], [180, 0]);
+
+    return { transform: [{ rotate: `${rotate}deg` }] };
+  });
+
   const tapGestureEvent =
     useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
-      onEnd(event, context, isCanceledOrFailed) {
+      onEnd() {
         const layout = measure(aRef);
-        pageY.value = layout?.y + layout.height || 0;
-        tooltipPosition.value =
-          layout?.pageY > SCREEN_HEIGHT ? "top" : "bottom";
-        runOnJS(handleOpen)();
+
+        if (layout) {
+          pageY.value = layout?.y + layout?.height || 0;
+          tooltipPosition.value =
+            layout?.pageY > SCREEN_HEIGHT ? "top" : "bottom";
+          runOnJS(handleOpen)();
+        }
       },
     });
 
   return (
     <>
-      <View ref={aRef}>
+      <View ref={aRef} style={[]}>
         <TapGestureHandler onGestureEvent={tapGestureEvent}>
           <Animated.View
             style={[
@@ -181,12 +192,10 @@ function Select({
               styles.select,
               rContainerStyle,
             ]}
-            // onLayout={handleSelectLayout}
           >
             <TouchableHighlight
               activeOpacity={0.2}
               underlayColor={backgroundColor}
-              // onPress={handleOpen}
               style={[styles.option_touchable, { backgroundColor }]}
             >
               <View style={styles.select_selected_option_container}>
@@ -199,11 +208,25 @@ function Select({
                 >
                   {currentValue?.name || "Select an option"}
                 </Animated.Text>
+                <Animated.Text
+                  style={[
+                    {
+                      color,
+                      fontSize: 14,
+                      marginLeft: "auto",
+                      marginRight: 8,
+                    },
+                    rChevronStyle,
+                  ]}
+                >
+                  &#x25B2;
+                </Animated.Text>
               </View>
             </TouchableHighlight>
           </Animated.View>
         </TapGestureHandler>
       </View>
+      {/* <FullWindowOverlay> */}
       <OptionsContainer
         tooltipPosition={tooltipPosition}
         optionsPlaceholder={optionsPlaceholder}
@@ -237,6 +260,7 @@ function Select({
           )
         ) : null}
       </OptionsContainer>
+      {/* </FullWindowOverlay> */}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 import Select from "./Select";
 
 interface ISelectSample {}
@@ -7,7 +7,11 @@ interface ISelectSample {}
 function SelectSample({}: ISelectSample) {
   return (
     <ScrollView style={{ flex: 1 }}>
-      <Select name="select_1" zIndex={8}></Select>
+      <View>
+        <View>
+          <Select name="select_1" zIndex={8}></Select>
+        </View>
+      </View>
       <Select name="select_2" zIndex={8}></Select>
       <Select name="select_3" zIndex={8}></Select>
       <Select name="select_4" zIndex={8}></Select>
